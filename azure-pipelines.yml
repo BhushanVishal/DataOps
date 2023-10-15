@@ -1,0 +1,33 @@
+
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+  - stage: artifacts
+    displayName: Prepare Artifacts
+    jobs:
+      - job:
+        steps:
+
+        - task: CopyFiles@2
+          inputs:
+            SourceFolder: '$(Build.SourcesDirectory)/databricks/src'
+            Contents: | # databricks supported extensions: https://docs.databricks.com/notebooks/notebooks-manage.html#notebook-external-formats
+              **/*.py
+              **/*.sql
+              **/*.scala
+              **/*.sc
+              **/*.r
+              **/*.html
+              **/*.ipynb
+              **/*.Rmd
+            TargetFolder: '$(Build.ArtifactsStagingDirectory)/src'
+
+        - task: PublishPipelineArtifact@1
+          inputs:
+            targetPath: '$(Build.ArtifactsStagingDirectory)'
+            artifact: 'databricks'
+            publishLocation: 'pipeline'
