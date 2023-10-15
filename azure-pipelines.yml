@@ -1,4 +1,3 @@
-
 trigger:
 - master
 
@@ -31,3 +30,29 @@ stages:
             targetPath: '$(Build.ArtifactsStagingDirectory)'
             artifact: 'databricks'
             publishLocation: 'pipeline'
+
+  - stage: 
+    displayName: Deploy
+    jobs:
+      - deployment:
+        environment: dev
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+              - task: UsePythonVersion@0
+                displayName: Configuring Python Version
+                inputs:
+                  versionSpec: '3.x'
+                  addToPath: true
+                  architecture: 'x64'
+
+              - powershell: |
+                  Write-Output "[AZDO]" | Out-File ~/.databrickscfg -Encoding ASCII
+                  Write-Output "host = $(databricks.host)" | Out-File ~/.databrickscfg -Encoding ASCII -Append
+                  Write-Output "token = $(databricks.token)" | Out-File ~/.databrickscfg -Encoding ASCII -Append
+                  pip3 install --upgrade databricks-cli
+                displayName: configuring databricks
+              - powershell: |                  
+                  databricks workspace import_dir -o --profile AZDO $(Pipeline.Workspace)/databricks/src/ /src
+                displayName: deploying notebooks
